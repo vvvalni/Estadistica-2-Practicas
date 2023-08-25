@@ -1,0 +1,113 @@
+---
+title: "Solucionario Nº 1"
+subtitle: "Curso: POL304 - Estadística para el análisis político 2"
+author: "Jefes de práctica: Alexander Benites, Chiara Zamora y Airam Bello"
+date: "Ciclo 2023-2"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+### Pregunta 1
+
+Aplica un regresión para comprobar la H2 y responde lo siguiente: 
+
+```{r}
+linkADrive='https://docs.google.com/spreadsheets/d/e/2PACX-1vRSoEIFbRc_Angw6-if_lje9Ds39pDlp-x7gPz5xcoVCA1ACtcBMnuOvnpPZcCTL7jLCdQ03kIZgSkR/pub?gid=0&single=true&output=csv'
+demo=read.csv(linkADrive)
+```
+
+```{r}
+demo$Regimen=as.factor(demo$Regimen)
+```
+
+```{r}
+modelo1=formula(Score~Elecciones+Regimen)
+regre1=lm(modelo1,data = demo)
+summary(regre1)
+```
+
+```{r}
+modelo2=formula(Score~Elecciones+Gobierno+Regimen)
+regre2=lm(modelo2,data = demo)
+summary(regre2)
+```
+
+
+```{r}
+modelo3=formula(Score~Elecciones+Gobierno+ParticipacionPolitica+Regimen)
+regre3=lm(modelo3,data = demo)
+summary(regre3)
+```
+
+```{r}
+modelo4=formula(Score~Elecciones+Gobierno+ParticipacionPolitica+LibertadesCiviles+Regimen)
+regre4=lm(modelo4,data = demo)
+summary(regre4)
+```
+
+Rspta. Tiene un nivel de significancia de 0.1; ese efecto es positivo y la magnitud de ese efecto es 0.315.
+
+
+### Pregunta 2
+
+Aplica un test de ANOVA y selecciona el mejor modelo:
+
+```{r}
+library(lm.beta)
+library(modelsummary)
+models=list('apropiacion (I)'=regre1,
+            'apropiacion (II)'=regre2,
+            'apropiacion (III)'=regre3,
+            'apropiacion (IV)'=regre4)
+modelsummary(models, title = "Resultados de todos los modelos",statistic = "conf.int",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+```{r}
+library(magrittr)
+library(knitr)
+tanova=anova(regre1,regre2,regre3,regre4)
+
+kable(tanova,
+      caption = "Tabla ANOVA para comparar modelos")%>%kableExtra::kable_styling(full_width = FALSE)
+```
+
+Rspta. Modelo 4
+
+
+### Pregunta 3
+
+Realiza el diagnóstico del mejor modelo y responde lo siguiente:
+
+```{r}
+plot(regre4, 5)
+```
+
+```{r}
+library(kableExtra)
+checkRegre4=as.data.frame(influence.measures(regre4)$is.inf)
+checkRegre4[checkRegre4$cook.d & checkRegre4$hat,c('cook.d','hat')]%>%kable(caption = "Valores Influyentes criticos")%>%kable_styling(full_width = F)
+```
+
+
+Rspta. Ninguna de las anteriores.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
