@@ -305,6 +305,17 @@ mapDIS=sf::read_sf("seattle.shp")
 ggplot(mapDIS) + geom_sf()
 ```
 
+```{r}
+fromGit2=("https://github.com/vvvalni/Estadistica-2-Practicas/raw/main/DEPARTAMENTOS_inei_geogpsperu_suyopomalia.json") #link desde github
+
+wazipMap <- rgdal::readOGR(fromGit2,stringsAsFactors = FALSE)
+plot(wazipMap)
+```
+```{r}
+map2=sf::read_sf("PROVINCIAS_inei_geogpsperu_suyopomalia.shp")
+ggplot(map2) + geom_sf()
+```
+
 
 # **7. Lugares ricos en datos (Bases estructuradas)**
 
