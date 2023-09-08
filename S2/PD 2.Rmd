@@ -1,0 +1,119 @@
+---
+title: "PD 2"
+author: "Valeria Yesquen"
+date: "2023-09-01"
+output: html_document
+---
+```{r}
+library(rvest)
+url="https://www.gob.pe/institucion/rree/funcionarios"
+pagina_web=read_html(url)
+```
+
+```{r}
+css_nombre="h3.text-2xl"
+nombre_html <- html_nodes(pagina_web,css_nombre)
+nombre_texto <- html_text(nombre_html) 
+head(nombre_texto)
+```
+```{r}
+css_cargo="p"
+cargo_html <- html_nodes(pagina_web,css_cargo)
+cargo_texto <- html_text(cargo_html)
+head(cargo_texto)
+```
+
+```{r}
+dataWS3 <- data.frame(NOMBRE = nombre_texto, CARGO = cargo_texto)
+head(dataWS3)
+```
+
+###Congresistas
+
+```{r}
+url2="https://www.congreso.gob.pe/pleno/congresistas/"
+pagina_web2=read_html(url2)
+```
+
+```{r}
+css_nombre2="a.conginfo" 
+nombre_html_2 <- html_nodes(pagina_web2,css_nombre2) 
+nombre_texto_2 <- html_text(nombre_html_2) 
+head(nombre_texto_2) #vemos los datos
+```
+```{r}
+css_grupo="span.partidolist"
+grupo_html <- html_nodes(pagina_web2,css_grupo)
+grupo_texto <- html_text(grupo_html)
+head(grupo_texto)
+```
+```{r}
+datacon <- data.frame(NOMBRE = nombre_texto_2, GRUPO = grupo_texto)
+head(datacon)
+```
+###FUNCIONARIOS
+
+```{r}
+url="https://www.gob.pe/institucion/mef/funcionarios?sheet="
+css_cargo="p"
+css_name="h3.text-2xl"
+final_table = list()
+```
+
+###PELICULAS
+
+```{r}
+library(rvest)
+url_peli = "https://www.filmaffinity.com/es/ranking.php?rn=ranking_fa_movies"
+pagina_web_peli=read_html(url_peli)
+```
+
+```{r}
+css_nombre_peli="div.mc-title"
+nombre_html_peli <- html_nodes(pagina_web_peli,css_nombre_peli)
+nombre_peli <- html_text(nombre_html_peli) 
+head(nombre_peli) 
+```
+```{r}
+css_director="div.mc-director"
+director_html <- html_nodes(pagina_web_peli,css_director)
+director_texto <- html_text(director_html)
+head(director_texto)
+```
+```{r}
+datapeli <- data.frame(NOMBRE = nombre_peli, DIRECTOR = director_texto)
+head(datapeli)
+```
+
+###RENIEC LOOPS
+
+```{r}
+url_RENIEC="https://www.gob.pe/institucion/reniec/funcionarios"
+pagina_web_RENIEC=read_html(url_RENIEC)
+css_RENIEC_name="h3.text-2xl"
+nombre_html_RENIEC <- html_nodes(pagina_web_RENIEC,css_RENIEC_name)
+nombre_RENIEC <- html_text(nombre_html_RENIEC) 
+head(nombre_RENIEC) 
+```
+
+```{r}
+css_cargo_RENIEC="p"
+cargo_RENIEC_html <- html_nodes(pagina_web_RENIEC,css_cargo_RENIEC)
+cargo_RENIEC_texto <- html_text(cargo_RENIEC_html)
+head(cargo_RENIEC_texto)
+```
+
+```{r}
+dataRENIEC <- data.frame(NOMBRE = nombre_RENIEC, CARGO = cargo_RENIEC_texto)
+head(dataRENIEC)
+```
+
+###RENIEC LOOP
+
+```{r}
+url_RENIEC_LOOP="https://www.gob.pe/institucion/mef/funcionarios?sheet="
+css_cargo_RENIEC_LOOP="p"
+css_name="h3.text-2xl"
+final_table = list()
+```
+
