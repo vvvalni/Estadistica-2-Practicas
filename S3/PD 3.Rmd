@@ -1,0 +1,315 @@
+---
+title: "PD 3"
+author: "Valeria Yesquen"
+date: "2023-09-08"
+output: html_document
+---
+
+```{r}
+library(rio)
+data="https://github.com/WendyAdrianzenRossi/Statistics/raw/main/midata.csv"
+urban=import(data)
+```
+
+```{r}
+urban[10,1]
+```
+```{r}
+urban$COUNTRY =trimws(urban$COUNTRY,which=c("right"),whitespace = "[\\h\\v]")
+```
+
+```{r}
+urban[1,1]
+```
+
+```{r}
+urban[1,2]
+```
+
+```{r}
+library(stringr)
+str_extract_all(string = '25.3%,0% y 23.5% 13 34 hola 5 6 chau 200',pattern="\\d")
+```
+
+```{r}
+str_extract_all('25.3%,0% y 23.5% 13 34 hola 5 6 chau', pattern = "\\d+") # + es al menos 1 
+```
+
+```{r}
+str_extract_all('25.3%,0% y 23.5% 13 34 hola 5 6 chau', pattern="\\d+\\.*\\d*")
+```
+
+```{r}
+str_extract_all('25.3%,0% y 23.5% 13 34 hola 5 6 chau',pattern = "\\d+\\.*\\d*\\%")
+```
+
+```{r}
+str_extract_all('25.3%,0% y 23.5% 13 34 hola 5 6 chau',pattern = "(\\d+\\.*\\d*)(?=\\%)")
+```
+
+```{r}
+str_extract_all('25.3%,0% y -23.5% 13 34 hola', pattern = "(\\-*\\d+\\.*\\d*)(?=\\%)")
+```
+
+```{r}
+str_extract_all('25%, 0% y 23.5%',
+                "(\\-*\\d+\\.*\\d*)(?=\\%)")[[1]][1]
+```
+
+```{r}
+str_extract_all('25%, 0% y 23.5%',
+                "(\\-*\\d+\\.*\\d*)(?=\\%)")[[1]][2]
+```
+
+```{r}
+str_extract_all('25%, 0% y 23.5%',
+                "(\\-*\\d+\\.*\\d*)(?=\\%)")[[1]][3]
+```
+
+```{r}
+urban[4,2]
+```
+```{r}
+str_extract_all(urban$URBANIZATION,"(\\-*\\d+\\.*\\d*)(?=\\%)")
+```
+```{r}
+str_extract_all(urban$URBANIZATION,
+                "(\\-*\\d+\\.*\\d*)(?=\\%)",
+                simplify = T)
+```
+
+```{r}
+# Creamos objetos
+PATRON="(\\-*\\d+\\.*\\d*)(?=\\%)"
+COLSUCIA=urban$URBANIZATION
+
+# UNA COLUMNA
+urban$pop_urb=str_extract_all(string = COLSUCIA,
+                              pattern= PATRON,
+                              simplify = T)[,1]
+
+# OTRA COLUMNA
+urban$rate_urb=str_extract_all(string = COLSUCIA,
+                               pattern=PATRON,
+                               simplify = T)[,2]
+```
+
+```{r}
+head(urban[-2])
+```
+
+```{r}
+urban[1,2]
+```
+
+```{r}
+str_split(string = urban$URBANIZATION,
+          pattern = 'rate of urbanization: ')
+```
+
+
+```{r}
+urban$pop_urb2=str_split(string = urban$URBANIZATION,
+                         pattern = 'rate of urbanization:',
+                         simplify = T)[,1]
+
+urban$rate_urb2=str_split(string = urban$URBANIZATION,
+                          pattern = 'rate of urbanization:',
+                          simplify = T)[,2]
+```
+
+
+```{r}
+urban$pop_urb2[1]
+```
+
+```{r}
+str_split(urban$pop_urb2, '% of total', simplify = T)
+```
+
+```{r}
+urban$pop_urb2=str_split(urban$pop_urb2,
+                         '% of total',
+                         simplify = T)[,1] 
+```
+
+```{r}
+urban$pop_urb2[1]
+```
+```{r}
+str_split(urban$pop_urb2,':',simplify = T)
+```
+
+```{r}
+urban$pop_urb2=str_split(urban$pop_urb2,
+                         ':',
+                         simplify = T)[,2]
+```
+
+```{r}
+urban$pop_urb2[1]
+```
+```{r}
+urban$rate_urb2[1]
+```
+```{r}
+urban$rate_urb2=str_split(urban$rate_urb2,
+                          pattern = '%',
+                          simplify = T)[,1]
+```
+
+```{r}
+urban$rate_urb2[1]
+```
+
+```{r}
+head(urban[,-2])
+```
+
+```{r}
+library(rvest)
+url="https://www.filmaffinity.com/es/ranking.php?rn=ranking_fa_movies"
+pagina_web=read_html(url)
+```
+
+```{r}
+css_nombre="div.mc-title"
+nombre_html <- html_nodes(pagina_web,css_nombre)
+nombre_texto <- html_text(nombre_html) 
+head(nombre_texto)
+```
+```{r}
+css_director="div.mc-director"
+director_html <- html_nodes(pagina_web,css_director)
+director_texto <- html_text(director_html) 
+head(director_texto)
+```
+
+```{r}
+css_cast="div.mc-cast" # contenemos la clase CSS en un objeto
+cast_html <- html_nodes(pagina_web,css_cast) # con html_nodes y html_text, obtenemos el código html que contiene los países
+cast_texto <- html_text(cast_html) 
+head(cast_texto) #vemos los datos
+```
+
+```{r}
+css_data="li.data" # contenemos la clase CSS en un objeto
+data_html <- html_nodes(pagina_web,css_data) # con html_nodes y html_text, obtenemos el código html que contiene los países
+data_texto <- html_text(data_html) 
+head(data_texto) #vemos los datos
+```
+
+```{r}
+data_movies <- data.frame(NOMBRE = nombre_texto, DIRECTOR = director_texto, CAST = cast_texto, POINTS = data_texto)
+head(data_movies)
+```
+
+```{r}
+data_movies$YEAR = str_extract_all(data_movies$NOMBRE,
+                    "\\d+\\.*\\d*",
+                    simplify = T)[,1]
+data_movies$YEAR
+```
+
+```{r}
+data_movies[3]
+```
+
+```{r}
+data_movies$DIR1 = str_split(data_movies$CAST,
+                         ', ',
+                         simplify = T)[,1] 
+
+data_movies$DIR2 = str_split(data_movies$CAST,
+                         ', ',
+                         simplify = T)[,2]
+
+data_movies$DIR3 = str_split(data_movies$CAST,
+                         ', ',
+                         simplify = T)[,3]
+
+data_movies$DIR4 = str_split(data_movies$CAST,
+                         ', ',
+                         simplify = T)[,4]
+
+data_movies$DIR5 = str_split(data_movies$CAST,
+                         ', ',
+                         simplify = T)[,5]
+
+data_movies$DIR6 = str_split(data_movies$CAST,
+                         ', ',
+                         simplify = T)[,6]
+
+data_movies$DIR7 = str_split(data_movies$CAST,
+                         ', ',
+                         simplify = T)[,7]
+
+data_movies$DIR8 = str_split(data_movies$CAST,
+                         ', ',
+                         simplify = T)[,8]
+
+data_movies$DIR9 = str_split(data_movies$CAST,
+                         ', ',
+                         simplify = T)[,9] 
+```
+
+```{r}
+str_split(data_movies$CAST,
+                         ', ',
+                         simplify = T)
+```
+
+```{r}
+data_movies[4]
+```
+
+```{r}
+str_extract_all(data_movies$POINTS,pattern = "\\d+\\.*\\d*")
+```
+
+```{r}
+data_movies$USUARIOS = str_extract_all(data_movies$POINTS,pattern = "\\d+\\.*\\d*", simplify = T) [,3] #Todo en el tercer vector
+```
+
+```{r}
+data_movies$PUNTAJE1 = str_extract_all(data_movies$POINTS,pattern = "\\d+\\.*\\d*", simplify = T) [,1]
+data_movies$PUNTAJE2 = str_extract_all(data_movies$POINTS,pattern = "\\d+\\.*\\d*", simplify = T) [,2]
+```
+
+```{r}
+data_movies$PUNTAJE = paste(data_movies$PUNTAJE1, data_movies$PUNTAJE2, sep = ",")
+```
+
+```{r}
+data_movies = data_movies[,-c(3,4,16,17)]
+```
+
+
+
+
+
+
+Ejercicios:
+
+Ataques terroristas:
+
+```{r}
+data_attacks = import("data_terror_atacks.xlsx")
+```
+
+```{r}
+data_attacks[,2]
+```
+
+```{r}
+str_extract_all(data_attacks$Fecha, pattern = "(\\-*\\d+\\.*\\d*)")
+```
+
+```{r}
+data_attacks$Fecha=str_extract_all(data_attacks$Fecha, pattern = "(\\d+\\.*\\d*)", simplify = T)[,1]
+```
+
+
+
+
+

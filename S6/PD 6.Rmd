@@ -1,0 +1,391 @@
+---
+title: "PD 6"
+author: "Valeria Yesquen"
+date: "2023-09-29"
+output: html_document
+---
+
+```{r}
+library(rio)
+dataols = import("https://github.com/Alexanderbenit7/ERM2018/raw/master/finalData.csv")
+dataols = dataols[,c(15,1,3,6,9,4,7)]
+```
+
+```{r}
+colnames(dataols) = c("Vote","Dist","Ubigeo","Disc","Pobre","Pop","IVA")
+dataols$Dic_porc = dataols$Disc/dataols$Pop
+dataols$IVA_cat = factor(ifelse(dataols$IVA>0.173227,1,0))
+```
+
+## Regresión Lineal (Gaussiana): OLS
+
+En la relación lineal (gaussiana), no hay diferencia en la formula al momento de agregar una variable de control. No hay diferencia entre la variable de control y las variables independientes.
+
+```{r}
+reg_ols = lm(Vote ~ Dic_porc + Pobre, data = dataols)
+summary(reg_ols)
+```
+
+El aumento de 1 punto porcentual en la variable del porcentaje de pobreza del distrito, reduce en 1.75 el voto a Fuerza Popular. O sea, mantienen una relación inversa o negativa.
+
+El modelo evalúa el impacto en la variable independiente sobre la dependiente, manteniendo las demás constante.
+
+```{r}
+reg_ols1 = lm(Vote ~ Dic_porc + Pobre + IVA_cat, data = dataols)
+summary(reg_ols1)
+```
+
+```{r}
+library(magrittr)
+library(knitr)
+tanova=anova(reg_ols,reg_ols1)
+
+kable(tanova,
+      caption = "Tabla ANOVA para comparar modelos")%>%kableExtra::kable_styling(full_width = FALSE)
+```
+
+```{r}
+reg_ols1_st = lm(scale(Vote) ~ scale(Dic_porc) + scale(Pobre) + scale(as.numeric(IVA_cat)), data = dataols)
+summary(reg_ols1_st)
+```
+
+```{r}
+library(modelsummary)
+modelo_st=list('Voto estandarizado' = reg_ols1_st)
+modelsummary(modelo_st, title = "Regresion: modelo con \ncoeficientes estandarizados",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+#### Linealidad
+
+```{r}
+plot(reg_ols1,1)
+```
+
+```{r}
+mean(reg_ols1$residuals)
+```
+
+Mientras más cercano el valor sea a 0 (o chiquito), más probabilidad de que exista linealidad
+
+#### Homocedasticidad
+
+Cuando ploteamos los puntos, la idea es que no hayan conjuntos de datos que tengan un patrón distinto, que se alejen de la recta. En este caso, se busca que sea mayor a 0.05 el p-value (es de los pocos casos en lo que se busca eso).
+
+```{r}
+plot(reg_ols1, 3)
+```
+
+```{r}
+library(lmtest)
+bptest(reg_ols1)
+```
+
+#### Normalidad de residuos:
+
+Con la prueba shapiro se busca demostrar que los residuos o errores no tengan un sesgo.
+
+si mis datos no tienen un sesgo, lo más probable es que el promedio de los errores, caiga dentro del intervalo de confianza, lo cual quiere decir que el modelo sigue siendo estadísticamente significativo
+
+```{r}
+plot(reg_ols1, 2)
+shapiro.test(reg_ols1$residuals)
+```
+
+#### No multicolinealidad
+
+```{r}
+library(DescTools)
+VIF(reg_ols1)
+```
+
+Que no haya una correlación muy alta entre predictores. Idealmente menores a 3, aceptable hasta menor a 5.
+
+#### Valores influyentes
+
+```{r}
+plot(reg_ols1, 5)
+```
+
+```{r}
+check = as.data.frame(influence.measures(reg_ols1)$is.inf)
+check[check$cook.d & check$hat,]
+```
+
+## Regresión Poisson
+
+```{r}
+data = import("Base - Nacional.sav")
+```
+
+```{r}
+subdata = data[,c(2,4,5,7,8,15,16,29,82,57,58:63)]
+colnames(subdata) = c("SEX","EDAD1","EDAD2","ESTUDIOS1","ESTUDIOS2","VIVIR_FUERA",
+                      "FAM_FUERA","BARRIO","NOTICIAS","M_APARIENCIA","M_AMIGABLE",
+                      "M_COQUETA","M_OPORTUNISTA","M_SEGURA","M_PROMISCUA","M_ATRACTIVA")
+```
+
+```{r}
+subdata$VIVIR_FUERA = ifelse(subdata$VIVIR_FUERA == "Sí",1,0)
+subdata$VIVIR_FUERA = factor(subdata$VIVIR_FUERA, levels = c(0:1), labels = c("No", "Sí"))
+```
+
+```{r}
+subdata$M_APARIENCIA = ifelse(subdata$M_APARIENCIA == "Sí",1,0)
+subdata$M_AMIGABLE = ifelse(subdata$M_AMIGABLE == "Sí, bastante",1,0)
+subdata$M_COQUETA = ifelse(subdata$M_COQUETA == "Sí, bastante",1,0)
+subdata$M_OPORTUNISTA = ifelse(subdata$M_OPORTUNISTA == "Sí, bastante",1,0)
+subdata$M_SEGURA = ifelse(subdata$M_SEGURA == "Sí, bastante",1,0)
+subdata$M_PROMISCUA = ifelse(subdata$M_PROMISCUA == "Sí, bastante",1,0)
+subdata$M_ATRACTIVA = ifelse(subdata$M_ATRACTIVA == "Sí, bastante",1,0)
+```
+
+Se crea la variable dependiente:
+
+```{r}
+subdata$vd = subdata$M_APARIENCIA + subdata$M_OPORTUNISTA + subdata$M_PROMISCUA + subdata$M_COQUETA
+```
+
+Variables independientes
+
+```{r}
+#Genero:
+subdata = subdata[subdata$SEX == "Hombre" |
+                    subdata$SEX == "Mujer",]
+
+subdata$SEX = ifelse(subdata$SEX == "Hombre",1,0)
+subdata$SEX = factor(subdata$SEX, levels = c(0,1), labels = c("Mujer","Hombre"))
+```
+
+```{r}
+#Comparte el barrio con personas venezolanas:
+subdata$BARRIO[subdata$BARRIO == "No sabe / Prefiere no responder"] = NA
+
+subdata$BARRIO = ifelse(subdata$BARRIO == "Sí",1,0) 
+subdata$BARRIO = factor(subdata$BARRIO, levels = c(0:1), labels = c("No", "Sí"))
+```
+
+```{r}
+#Exposición a medios de comunicación:
+subdata$NOTICIAS[subdata$NOTICIAS == "No sabe / Prefiere no responder"] = NA 
+
+subdata$NOTICIAS = ifelse(subdata$NOTICIAS == "Nunca",1,
+                          ifelse(subdata$NOTICIAS == "Una vez al mes",2,
+                          ifelse(subdata$NOTICIAS == "Una vez a la semana",3,
+                          ifelse(subdata$NOTICIAS == "3 veces a la semana aprox.",4,
+                          ifelse(subdata$NOTICIAS == "Todos los días",5,0)))))
+
+subdata$NOTICIAS = factor(subdata$NOTICIAS, levels = c(1:5),
+                          labels = c("Nunca","Una vez al mes","Una vez a la semana",
+                                     "Tres veces a la semana","Todos los días"))
+```
+
+```{r}
+library(fastDummies)
+subdata=dummy_cols(subdata, select_columns = c("NOTICIAS"))
+```
+
+```{r}
+colnames(subdata)[18] = "NUNCA"
+colnames(subdata)[19] = "UNA_MES"
+colnames(subdata)[20] = "UNA_SEMANA"
+colnames(subdata)[21] = "TRES_SEMANA"
+colnames(subdata)[22] = "TODOS_DIAS"
+```
+
+#### Modelos en base a las hipótesis
+
+```{r}
+rp1=glm(vd ~ BARRIO, data = subdata, family = poisson(link = "log"))
+rp2=glm(vd ~ BARRIO + SEX, data = subdata, family = poisson(link = "log"))
+rp3=glm(vd ~ BARRIO + SEX + TODOS_DIAS, data = subdata, family = poisson(link = "log"))
+```
+
+```{r}
+# displaying results
+modelslmpoi=list('POISSON 1'=rp1,
+                 'POISSON 2'=rp2,
+                 'POISSON 3'=rp3)
+
+modelsummary(modelslmpoi, title = "Regresiones Poisson",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+#### Exponenciar coeficientes
+
+```{r}
+modelsummary(modelslmpoi, title = "Regresiones Poisson",
+             stars = TRUE,
+             statistic = 'conf.int',
+             exponentiate = T, # exponenciar!!!!!
+             output = "kableExtra")
+```
+
+forma más sencilla;
+
+```{r}
+exp(coef(rp2)[['BARRIOSí']]) #Personas venezolanas en el barrio
+```
+
+```{r}
+exp_rp2 = 1-1.167723
+exp_rp2 = exp_rp2*-1
+exp_rp2
+```
+
+```{r}
+100*exp_rp2
+```
+
+```{r}
+exp(coef(rp3)[['TODOS_DIAS']])
+```
+
+```{r}
+exp_rp3 = 1-1.425909
+exp_rp3 = exp_rp3*-1
+exp_rp3*100
+```
+
+#### Equisdispersión
+
+```{r}
+library(magrittr)
+overdispersion=AER::dispersiontest(rp3,alternative='greater')$ p.value<0.05
+underdispersion=AER::dispersiontest(rp3,alternative='less')$ p.value<0.05
+# tabla
+testResult=as.data.frame(rbind(overdispersion,underdispersion))
+names(testResult)='Es probable?'
+testResult%>%kable(caption = "Test de Equidispersión")%>%kableExtra::kable_styling()
+```
+
+Se usa quassi-poisson
+
+```{r}
+rqp = glm(vd ~ BARRIO + SEX + TODOS_DIAS, data = subdata,
+          family = quasipoisson(link = "log"))
+
+modelsPQP=list('POISSON'=rp3,'QUASIPOISSON'=rqp)
+
+modelsummary(modelsPQP, 
+             title = "Regresiones Poisson y QuasiPoisson",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+```{r}
+anova(rp3,rqp, test = "Chisq") %>%
+kable(caption = "Tabla ANOVA para comparar modelos")%>%kableExtra::kable_styling(full_width = FALSE)
+```
+
+## Regresión Logística
+
+```{r}
+table(subdata$M_APARIENCIA)
+```
+
+```{r}
+dep=subdata$M_APARIENCIA # a la fila
+ind=subdata$SEX # a la columna
+
+NarrsexTable=table(dep,ind,dnn = c('Narrative','Gender'))
+
+### suma por fila y columna
+addmargins(NarrsexTable)%>%
+    kable(caption = "Tabla de Contingencia: 'Género' y 'Creer la narrativa'")%>%
+    kableExtra::kable_styling(full_width = F)
+```
+
+```{r}
+ProbMujNarr=NarrsexTable[2,1]/sum(NarrsexTable[,1])
+MASS::fractions(ProbMujNarr)
+ProbMujNarr
+```
+
+ODDS ratio en función a la mujer
+
+```{r}
+OddsMujNarr=NarrsexTable[2,1]/NarrsexTable[1,1]
+MASS::fractions(OddsMujNarr)
+OddsMujNarr
+```
+
+ODDS ratio en función al hombre
+
+```{r}
+ProbHombNarr=NarrsexTable[2,2]/sum(NarrsexTable[,2])
+OddsHombNarr = ProbHombNarr/(1-ProbHombNarr)
+```
+
+```{r}
+(OR_MujHom=OddsMujNarr/OddsHombNarr)
+```
+
+```{r}
+mosaicplot( t(NarrsexTable),col = c("orange", "green"),main = "")
+```
+
+Diferencias estadísticamente significativas:
+
+```{r}
+set.seed(2023)
+
+### first hypothesis
+h1=formula(M_APARIENCIA~SEX)
+
+#regression
+rlog1=glm(h1, data=subdata,family = binomial)
+modelrl=list('Trabajo por su apariencia'=rlog1)
+
+#f <- function(x) format(x, digits = 4, scientific = FALSE)
+modelsummary(modelrl,
+             title = "Regresión Logística",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+#### Modelos
+
+```{r}
+h1=formula(M_APARIENCIA ~ SEX + EDAD1)
+h2=formula(M_APARIENCIA ~ SEX + EDAD1 + VIVIR_FUERA)
+h3=formula(M_APARIENCIA ~ SEX + EDAD1 + VIVIR_FUERA + TODOS_DIAS)
+```
+
+```{r}
+rlog1=glm(h1, data=subdata,family = binomial)
+rlog2=glm(h2, data=subdata,family = binomial)
+rlog3=glm(h3, data=subdata,family = binomial)
+```
+
+```{r}
+summary(rlog1)
+summary(rlog2)
+summary(rlog3)
+```
+
+```{r}
+modelsrl=list('Adhesión (I)'=rlog1,
+             'Adhesión (II)'=rlog2,
+             'Adhesión (III)'=rlog3)
+
+# formato creado para modelsummary
+formatoNumero = function(x) format(x, digits = 4, scientific = FALSE)
+modelsummary(modelsrl,
+             fmt=formatoNumero, # usa función que creé antes
+             exponentiate = T, # coeficientes sin logaritmo
+             statistic = 'conf.int', # mostrar ICs
+             title = "Regresión Logísticas (Coeficientes Exponenciados)",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+como estos calculando el ODDS, tampoco puedo interpretar los coeficientes directamente, para eso se calcula el efecto marginal. Si se
+
+```{r}
+library(margins)
+marginalsData=summary(margins(rlog3))
+marginalsData%>% kable(caption = "Efectos Marginales Promedio (AME)- Modelo III") %>%kableExtra::kable_styling(full_width = T)
+```
