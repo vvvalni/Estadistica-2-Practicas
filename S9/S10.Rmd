@@ -1,0 +1,131 @@
+---
+title: "Sesion 6. Creación de flexdashboards (I)"
+author: 'Jefes de práctica: Airam Bello, Alexander Benites y Chiara Zamora '
+date: "Ciclo 2023-2"
+subtitle: 'Curso: POL304 - Estadística para el análisis político 2'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r,echo=FALSE, out.width="40%",fig.align="center"}
+knitr::include_graphics("logoPUCP.png") 
+```
+
+*Flexdashboard* es una poderosa herramienta en el lenguaje de programación R que permite la creación de dashboards interactivos y flexibles con relativa facilidad. Estos dashboards son especialmente útiles por varias razones.
+
+En primer lugar, **flexdashboard* facilita la presentación y visualización de datos complejos de manera intuitiva, lo que puede ayudarnos a comunicar de manera efectiva hallazgos a través de tablas dinámicas, gráficos y mapas interactivos. 
+ 
+Además, *flexdashboard* permite la incorporación de análisis estadísticos y modelos directamente en el dashboard, lo que significa que los investigadores pueden compartir no solo los resultados, sino también el código y la metodología detrás de sus análisis, fomentando la transparencia y la reproducibilidad en la investigación.
+
+Otra ventaja es que *flexdashboard* es altamente personalizable, lo que significa que pueden adaptar los dashboards a sus necesidades específicas y crear informes interactivos que sean accesibles para una variedad de audiencias, desde académicos hasta responsables políticos y el público en general.
+
+Para crear un panel, crea un documento R Markdown con el formato de salida *flexdashboard::flex_dashboard*. También puedes crear un documento desde RStudio usando el cuadro de diálogo *File -> New File -> R Markdown* y eligiendo una plantilla de "Flex Dashboard".
+
+La documentación completa de flexdashboard se encuentra en [https://rmarkdown.rstudio.com/flexdashboard/](https://rmarkdown.rstudio.com/flexdashboard/).
+
+### **1. Secciones**
+
+La regla general sobre el diseño del dashboard es que una sección de primer nivel genera una página, una sección de segundo nivel genera una columna (o una fila) y una sección de tercer nivel genera un cuadro (que contiene uno o más componentes del dashboard). **[Ejemplo 1]**
+
+Ten en cuenta que una serie de guiones debajo de una línea de texto es la sintaxis alternativa de Markdown para el encabezado de la sección de segundo nivel.
+
+Usamos una serie de guiones solo para que las secciones de segundo nivel se destaquen en el documento fuente. De forma predeterminada, las secciones de segundo nivel generan columnas en un panel y las secciones de tercer nivel se apilarán verticalmente dentro de las columnas. No es necesario tener columnas en un panel: cuando todo lo que tiene son las secciones de tercer nivel en el documento fuente, se apilarán verticalmente como una sola columna en la salida.
+
+El texto de los encabezados de segundo nivel no se mostrará en el resultado. Los encabezados de segundo nivel tienen el único propósito de diseño, por lo que el contenido real de los encabezados no importa en absoluto. Por el contrario, los encabezados de primer y tercer nivel se mostrarán como títulos.
+
+La Figura 5.1 muestra el resultado del ejemplo anterior, en el que puede ver dos columnas: la primera columna contiene el "Gráfico A" y la segunda columna contiene el "Gráfico B" y el "Gráfico C". Realmente no incluimos ningún código R en los fragmentos de código, por lo que todos los cuadros están vacíos. En estos fragmentos de código, puede escribir código R arbitrario que genere gráficos R, widgets HTML y varios otros componentes.
+
+#### 1.1. Diseños basados en filas
+
+Puede cambiar el diseño orientado a columnas al diseño orientado a filas a través de la opción de orientación.**[Ejemplo 2]**
+
+Eso significa que las secciones de segundo nivel serán filas y las secciones de tercer nivel se organizarán como columnas dentro de filas. 
+
+#### 1.2. Atributos en secciones
+
+Los encabezados de las secciones de segundo nivel pueden tener atributos; por ejemplo, puede establecer el ancho de una columna en 350. 
+
+Para el diseño orientado a filas, puede establecer el atributo de **data-height** para las filas. 
+
+El atributo {.tabset} se puede aplicar en una columna para que las secciones de tercer nivel se organicen en pestañas. **[Ejemplo 3]**
+
+#### 1.3. Multiples páginas
+
+Cuando tenga varias secciones de primer nivel en el documento, se mostrarán como páginas separadas en el panel. **[Ejemplo 4]** muestra el resultado. Tenga en cuenta que una serie de signos iguales es la sintaxis alternativa de Markdown para los encabezados de sección de primer nivel (también puede usar un solo signo de almohadilla #). 
+
+Los títulos de las páginas se muestran como un menú de navegación en la parte superior del panel. En este ejemplo, aplicamos íconos a los títulos de las páginas mediante el atributo de ícono de datos. Puede encontrar otros íconos disponibles en https://fontawesome.com.
+
+#### 1.4. Tableros de historia
+
+Además de los diseños basados en columnas y filas, puede presentar una serie de visualizaciones y comentarios relacionados a través del diseño del "storyboard". Para habilitar este diseño, utiliza la opción storyboard. 
+
+A continuación, **[Ejemplo 5]** muestra el resultado, en el que puede ver los botones de navegación izquierda/derecha en la parte superior para ayudarle a revisar todas las visualizaciones y comentarios asociados uno por uno.
+
+---
+
+### **2. Componentes**
+
+Una amplia variedad de componentes se pueden incluir en un diseño de dashboard, incluyendo:
+
+1. Visualizaciones interactivas de datos en JavaScript basadas en widgets de HTML.
+
+2. Salida gráfica en R, incluyendo gráficos base, lattice y de grid.
+
+3. Datos tabulares (con opciones de clasificación, filtrado y paginación).
+
+4. Cuadros de valores para resaltar datos resumidos importantes.
+
+5. Medidores para mostrar valores en un medidor dentro de un rango especificado.
+
+6. Anotaciones de texto de varios tipos.
+
+7. Una barra de navegación para proporcionar más enlaces relacionados con el dashboard.
+
+Los primeros tres componentes funcionan en la mayoría de los documentos de R Markdown, independientemente de los formatos de salida. Solo los últimos cuatro son específicos de los paneles de control, y los introducimos brevemente en esta sección.
+
+#### 2.1. Cajas de valores
+
+A veces deseas incluir uno o más valores simples en un dashboard. Puedes utilizar la función **valueBox()** del paquete flexdashboard para mostrar valores individuales junto con un título y un icono opcional. En **[Ejemplo 6]** hay tres secciones una al lado de la otra, cada una mostrando un solo valor
+
+La función valueBox() se utiliza para mostrar un valor y especificar un icono.
+
+El tercer fragmento de código ("distritos del Perú") hace que el color de fondo del cuadro de valor sea dinámico utilizando el parámetro de color. Los colores disponibles incluyen "primary", "info", "success", "warning" y "danger" (el valor predeterminado es "primary"). También puedes especificar cualquier color CSS válido (por ejemplo, "#ffffff", "rgb(100, 100, 100)", etc.).
+
+#### 2.2. Medidores
+
+Los medidores muestran valores en un medidor dentro de un rango especificado. En el **[Ejemplo 7]** hay un conjunto de tres medidores.
+
+Hay algunas cosas que debes tener en cuenta acerca de este ejemplo:
+
+La función **gauge()** se utiliza para mostrar un medidor. Tiene tres argumentos obligatorios: valor, mínimo y máximo (estos pueden ser cualquier valor numérico).
+
+Puedes especificar un símbolo opcional que se mostrará junto al valor (en el ejemplo, se usa "%" para denotar un porcentaje).
+
+Puedes especificar un conjunto de "sectores" de color personalizados utilizando la función gaugeSectors(). De forma predeterminada, se utiliza el color "success" del tema actual (normalmente verde) para el color del medidor. La opción de sectores te permite especificar un conjunto de tres rangos de valores (éxito, advertencia y peligro), lo que hace que el color del medidor cambie según su valor.
+
+#### 2.3. Anotaciones de texto
+
+Si necesitas incluir una narrativa adicional o explicación dentro de tu dashboard, puedes hacerlo de las siguientes maneras:
+
+1. Puedes incluir contenido en la parte superior de la página antes de que se introduzcan las secciones del dashboard.
+
+2- Puedes definir secciones de dashboard que no incluyan un gráfico, sino que incluyan contenido arbitrario (texto, imágenes, ecuaciones, etc.).
+
+El dashboard incluye contenido en la parte superior y una sección de dashboard que contiene solo texto.
+
+Cada componente dentro de un panel de control incluye secciones opcionales de título y notas. El título es simplemente el texto después del encabezado de sección de tercer nivel (###). Las notas son cualquier texto que se inicia con > después del fragmento de código que genera la salida del componente. **[Ejemplo 8]**
+
+Puedes excluir completamente el título aplicando el atributo .no-title a un encabezado de sección.
+
+#### 2.4. Barra de navegación
+
+Por defecto, la barra de navegación del panel de control incluye el título del documento, el autor y la fecha. Cuando un panel de control tiene varias páginas, los enlaces a las diversas páginas también se incluyen en el lado izquierdo de la barra de navegación. También puedes agregar enlaces a redes sociales en el panel de control.
+
+Además, puedes agregar enlaces personalizados a la barra de navegación utilizando la opción navbar. Las opciones del **[Ejemplo 9]** añaden un enlace "Acerca de" a la barra de navegación.
+
+Los elementos de la barra de navegación deben incluir un campo de título, un campo de icono o ambos. También debes incluir un href como destino de navegación. El campo align es opcional (puede ser "left" o "right" y se establece de forma predeterminada en "right").
+
+Puedes incluir enlaces a servicios de redes sociales a través de la opción social. El **[Ejemplo 10]** incluye enlaces a Twitter y Linkedin.
+
+La opción social puede incluir cualquier cantidad de los siguientes servicios: "facebook", "twitter", "google-plus", "linkedin" y "pinterest". También puedes especificar "menu" para proporcionar un menú desplegable de uso general que incluye todos los servicios.

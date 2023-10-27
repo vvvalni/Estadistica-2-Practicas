@@ -1,0 +1,40 @@
+---
+title: "Ejemplo 6"
+output:
+  flexdashboard::flex_dashboard:
+    orientation: rows
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(fontawesome)
+htmltools::tagList(fontawesome::fa_html_dependency())
+
+computeRegiones = function(...) return(24)
+computeProvincias = function(...) return(196)
+computeDistritos = function(...) return(1874)
+```
+
+### regiones del Perú
+
+```{r}
+regiones = computeRegiones()
+valueBox(regiones, icon = "fas fa-earth-americas")
+```
+
+### provincias del Perú
+
+```{r}
+provincias = computeProvincias()
+valueBox(provincias, icon = "fas fa-mountain-sun")
+```
+
+### distritos del Perú
+
+```{r}
+distritos = computeDistritos()
+valueBox(
+  distritos, icon = "fas fa-location-dot",
+  color = ifelse(distritos > 1874, "warning", "primary")
+)
+```

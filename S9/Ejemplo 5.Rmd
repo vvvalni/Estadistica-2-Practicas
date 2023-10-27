@@ -1,0 +1,32 @@
+---
+title: "Ejemplo 5"
+output: 
+  flexdashboard::flex_dashboard:
+    storyboard: true
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+```
+
+
+### Un gráfico de dispersión 
+
+```{r}
+plot(cars, pch = 20)
+grid()
+```
+
+---
+
+Algún comentario al respecto.
+
+### Un histograma en este panel
+
+```{r}
+hist(faithful$eruptions, col = 'gray', border = 'white', main = '')
+```
+
+---
+
+Algún comentario al respecto.

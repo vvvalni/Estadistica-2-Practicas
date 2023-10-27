@@ -1,0 +1,36 @@
+---
+title: "Ejemplo 8"
+output:
+  flexdashboard::flex_dashboard:
+    orientation: rows
+---
+
+Fallecimientos mensuales por bronquitis, enfisema y asma en el Reino Unido, 1974-1979. Fuente: P. J. Diggle, 1990, Time Series: A Biostatistical Introduction. Oxford, table A.3.
+
+```{r setup, include=FALSE}
+library(dygraphs)
+```
+
+Row {data-height=600}
+-------------------------------------
+
+### Todos los fallecimientos pulmonares
+
+```{r}
+dygraph(ldeaths)
+```
+
+Row {data-height=400}
+-------------------------------------
+
+### Fallecimientos masculinos
+
+```{r}
+dygraph(mdeaths)
+```
+
+> Fallecimientos mensuales por enfermedades pulmonares en el Reino Unido, 1974-1979.
+
+### Acerca de dygraphs
+
+Este ejemplo hace uso del paquete dygraphs en R. El paquete dygraphs proporciona amplias capacidades para graficar datos de series temporales en R. Puedes utilizar dygraphs en la consola de R, dentro de documentos de R Markdown y en aplicaciones Shiny.

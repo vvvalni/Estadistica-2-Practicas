@@ -1,0 +1,112 @@
+---
+title: "Solucionario Nº 5"
+subtitle: "Curso: POL304 - Estadística para el análisis político 2"
+author: "Jefes de práctica: Alexander Benites, Chiara Zamora y Airam Bello"
+date: "Ciclo 2023-2"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+### 1. Unificación de datos
+
+Cargue dos bases de datos que se encuentran en estos links:
+
+criminal_eap.xlsx -> <https://github.com/Alexanderbenit7/EAP2_2023-2/blob/main/data/criminal_eap.xlsx>
+order_eap.xlsx -> <https://github.com/Alexanderbenit7/EAP2_2023-2/blob/main/data/order_eap.xlsx>
+
+```{r}
+library(rio)
+criminal = import("https://github.com/Alexanderbenit7/EAP2_2023-2/raw/main/data/criminal_eap.xlsx")
+order = import("https://github.com/Alexanderbenit7/EAP2_2023-2/raw/main/data/order_eap.xlsx")
+```
+
+Cambie los nombres de las columnas con este código:
+
+```{r}
+colnames(criminal) = c("country","year","index_criminal","investigation","adjudication","correctional",
+                      "impartial","system1","system2","process")
+
+colnames(order) = c("country","year","index_order","controlled","civil_conflict","violence")
+```
+
+Merge:
+
+```{r}
+data = merge(criminal, order, by = "country")
+```
+
+Quedese solo con las variables necesarias para realizar un EFA:
+
+```{r}
+efa = data[,c(4:10,13:15)]
+```
+
+### Preguntas:
+
+#### Pregunta 1
+
+Calcule una matriz de correlaciones con todas las variables y responda a lo siguiente:
+
+1. ¿Cuál es la variable que muestra la correlación más baja con las demás variables de la matriz?
+
+```{r}
+library(polycor)
+corMatrix=polycor::hetcor(efa)$correlations
+round(corMatrix,2)
+```
+
+Rspta: civil_conflict
+
+
+#### Pregunta 2: 
+
+¿Cuál de las siguientes afirmaciones es falsa? Responda en base a la realización de las pruebas correspondientes:
+
+A. Existe un Overall MSA bastante alto, por lo que se puede proceder con el análisis factorial exploratorio
+B. No podemos descartar la hipótesis que plantea que la matriz de correlación analizada en una matriz identidad.
+C. Se tiene suficiente evidencia para rechazar la hipótesis que plantea que la matriz de correlación analizada es una matriz singular.
+
+```{r}
+library(psych)
+psych::KMO(corMatrix) 
+```
+
+```{r}
+cortest.bartlett(corMatrix,n=nrow(efa))$p.value>0.05
+```
+
+```{r}
+library(matrixcalc)
+is.singular.matrix(corMatrix)
+```
+
+Rspta. B. No podemos descartar la hipótesis que plantea que la matriz de correlación analizada en una matriz identidad.
+
+
+#### Pregunta 3: 
+
+Se le pide realizar un análisis factorial exploratorio con dos factores. Sobre el análisis realizado, ¿qué variable aportó más a los factores?
+
+A. impartial
+B. civil_conflict
+C. process
+
+```{r}
+library(GPArotation)
+resfa <- fa(efa,
+            nfactors = 2,
+            cor = 'mixed',
+            rotate = "varimax",
+            fm="minres")
+print(resfa$loadings)
+```
+```{r}
+fa.diagram(resfa,main = "Resultados del EFA")
+```
+
+```{r}
+sort(resfa$communality)
+```
+
+Rspta. *process*

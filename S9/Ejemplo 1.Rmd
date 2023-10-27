@@ -1,0 +1,71 @@
+---
+title: "Ejemplo 1"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+```
+
+# Sección 1
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### Gráfico A
+
+```{r}
+
+```
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### Gráfico B
+
+```{r}
+
+```
+
+### Gráfico C
+
+```{r}
+
+```
+
+
+# Sección 2
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### Gráfico A
+
+```{r}
+
+```
+
+### Gráfico B
+
+```{r}
+
+```
+
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### Gráfico C
+
+```{r}
+
+```
+
+### Gráfico D
+
+```{r}
+
+```
