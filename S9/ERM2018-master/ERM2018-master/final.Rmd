@@ -1,0 +1,338 @@
+---
+title: "Elecciones Regionales y Municipales (ERM) 2018 - Análisis de resultados"
+author: "Alexander Benites"
+date: "Octubre, 2022"
+subtitle: 'Curso: POL304 - Estadística para el análisis político 2'
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+---
+
+hola ocmo estas
+
+
+```{r,echo=FALSE, out.width="40%",fig.align="center"}
+knitr::include_graphics("logoPUCP.png") 
+```
+
+```{r include=FALSE}
+#Librerías del ejercicio:
+# include = FALSE para que no salga en el html.
+library(rio)
+library(dplyr)
+library(ggplot2)
+library(cowplot)
+library(kableExtra)
+library(reshape)
+library(DT)
+library(equatiomatic)
+library(modelsummary)
+library(factoextra)
+library(cluster)
+```
+
+```{r include=FALSE}
+data = import("finalData.csv")
+mapDIS=sf::read_sf("shapes/Lima.shp") #shapefile
+```
+
+El objetivo de este breve reporte es analizar los resultados de las Elecciones Regionales y Municipales (ERM) del año 2018, todo ello con el objetivo de entender en mayor profundidad las dinámicas del comportamiento político-electoral a nivel subnacional, específicamente en la provincia de Lima. Para ello, se llevarán a cabo los siguientes análisis:
+
+- Realizar un análisis descriptivo y georreferenciado de los resultados a nivel distrital
+- Aplicar técnicas de reducción de dimensiones para agrupar a los distritos en función a sus características sociodemográficas
+- Implementar técnicas multivariadas para modelar el comportamiento del voto, particularmente de la organización ganadora
+
+
+
+### 1. Análisis rápido de los resultados:
+
+```{r include=FALSE}
+#Juntamos información con el shape:
+mapDIS2=merge(mapDIS,data,by.x='IDDIST',by.y='UBIGEO', all.x = T) #siempre primero el shape
+```
+
+En promedio, los distritos de Lima presentaron un ausentismo del 18%. El porcentaje de ausentismo por distrito se puede observar en la tabla a continuación:
+
+```{r include=FALSE}
+ausen = data[,c(1,13)]
+colnames(ausen)[2] = "AUSENTISMO"
+```
+
+```{r echo=FALSE}
+datatable(ausen, filter = "top")
+```
+
+Contrario al escenario nacional, en el caso de la provincia de Lima, no son los distritos más pobres sino los de mayores recursos aquellos que presentan los porcentajes de ausentismo más elevados:
+
+```{r echo=FALSE,message=FALSE,eval=TRUE,fig.show='hold',fig.width=9,fig.height=6}
+ggplot(data, aes(x=IDH_2019, y=AUSEN)) + 
+  geom_point(size=1.5, shape=23, color="blue") +
+  geom_text(label=data$DISTRITO, vjust=-0.5, hjust = 1,color="black", size=3) +
+  
+      labs(title = "Ausentismo e IDH a nivel distrital",
+       x = "IDH",
+       y = "Ausentismo") +
+
+  geom_smooth(method=lm, se=FALSE, linetype="dashed",
+             color="darkred") + theme(panel.background = element_blank())
+```
+
+
+
+De los 43 distritos de la provincia de Lima, Acción Popular (AP), con la candidatura de Jorge Muñoz, ganó 40. Los tres distritos restantes tuvieron como organización ganadora a Podemos Perú, con la candidatura de Daniel Urresti. Territorialmente, los votos por AP se encuentran concentrados en los distritos del centro de la capital. Todo ello se puede observar en los mapas a continuación:
+
+```{r echo=FALSE,message=FALSE,warning=FALSE,eval=TRUE,fig.show='hold',fig.width=9.5,fig.height=5.55}
+### Mapa de AP
+
+mapaleyendaL= ggplot(mapDIS2)+ geom_sf() + theme_light()
+
+mapaleyL= mapaleyendaL + geom_sf(data=mapDIS2,
+              aes(fill=`ACCION POPULAR`),color = "gray")
+      
+mapa= mapaleyL +
+coord_sf() + 
+scale_fill_gradient(low = "seashell",  high = "firebrick", breaks=seq(from=0, to=100, by=20)) + theme_void() + 
+  
+theme(axis.title = element_blank(), axis.text = element_blank(), legend.position = "bottom") + labs(fill=" ") + theme(legend.text = element_text(size = 8)) +
+  
+labs(title = "% de votos válidos por Acción Popular") +
+  
+theme(
+plot.title = element_text(color="black", size=10, face="bold"))
+
+
+### Mapa de Podemos
+
+mapaleyendaL= ggplot(mapDIS2)+ geom_sf() + theme_light()
+
+mapaleyL= mapaleyendaL + geom_sf(data=mapDIS2,
+              aes(fill=`PODEMOS POR EL PROGRESO DEL PERU`),color = "gray")
+      
+mapa2= mapaleyL +
+coord_sf() + 
+scale_fill_gradient(low = "seashell",  high = "dodgerblue2", breaks=seq(from=0, to=100, by=20)) + theme_void() + 
+  
+theme(axis.title = element_blank(), axis.text = element_blank(), legend.position = "bottom") + labs(fill=" ") + theme(legend.text = element_text(size = 8)) +
+  
+labs(title = "% de votos válidos por Podemos") +
+  
+theme(
+plot.title = element_text(color="black", size=10, face="bold"))
+
+
+### Mapa del ganador
+
+mapaleyendaL= ggplot(mapDIS2)+ geom_sf() + theme_light()
+
+mapaleyL= mapaleyendaL + geom_sf(data=mapDIS2,
+              aes(fill=GANADOR),color = "gray")
+      
+mapa1= mapaleyL +
+coord_sf() + 
+scale_fill_manual(values=c("firebrick","dodgerblue2")) + theme_void() +
+  
+  
+theme(axis.title = element_blank(), axis.text = element_blank(), legend.position = "bottom") + labs(fill=" ") + theme(legend.text = element_text(size = 8)) +
+  
+labs(title = "Victoria a nivel distrital") +
+  
+theme(
+plot.title = element_text(color="black", size=11, face="bold"))
+
+plot_grid(mapa,mapa2,mapa1, ncol = 3)
+```
+
+```{r include=FALSE}
+ap = data[,c(1,15,29)]
+ap_summary = as.data.frame(apply(ap[-1],2,summary))
+```
+
+Si se exploran algunos datos descriptivos, se observa que en promedio, AP obtuvo 38% del total de votos válidos de cada distrito de la provincia. Además, en el 50% de ellos obtuvo el 35% de los votos o menos. Entre los que muestran un mayor nivel de votación se encuentran: Miraflores (69%), San Isidro (68%) y San Borja (66%).
+
+```{r echo=FALSE}
+ap_summary%>%
+  kbl() %>%
+  kable_minimal()
+```
+
+La distribución de votos de cada organización se puede osbervar en el gráfico a continuación:
+
+```{r include=FALSE}
+ap_resh = melt(ap, id=c("DISTRITO"))
+```
+
+```{r echo=FALSE,message=FALSE,warning=FALSE,eval=TRUE,fig.show='hold',fig.width=7,fig.height=5, fig.align="center"}
+ggplot(data= ap_resh, aes(x=value, group=variable, fill=variable)) +
+    geom_density(adjust=1.5, alpha=.4, color = "gray", linetype = "dashed") +
+      scale_fill_manual(values=c("firebrick","dodgerblue2"), name = "")  +
+      theme(legend.position="bottom") +
+
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank())  +
+  
+  labs(title = " ",
+       x = " ",
+       y = " ") 
+```
+
+
+
+### 2. Técnicas de reducción de dimensiones
+
+Vamos a agrupar a los distritos en función a sus características sociodemográficas, siguiendo técnicas de reducción de dimensiones. Tenemos tres estrategias: PAM, jerárquica y basada en densidad.
+
+```{r include=FALSE}
+data$tDISC = data$DISC_2020/data$POB_2020
+data$tMAS80 = data$MAS80_2020/data$POB_2020
+```
+
+```{r include=FALSE}
+inputData = data[,c(1,7:10,38,39)]
+row.names(inputData) = inputData$DISTRITO
+inputData = inputData[,-c(1)]
+```
+
+```{r include=FALSE}
+set.seed(2019)
+g.dist = daisy(inputData, metric="gower")
+```
+
+Hemos solicitado el número óptimo de clusters y son 3.
+
+```{r include=FALSE}
+fviz_nbclust(inputData, pam,diss=g.dist,method = "gap_stat",k.max = 10,verbose = F) #Recomendación de num para PAM. Sale 3
+fviz_nbclust(inputData, hcut,diss=g.dist,method = "gap_stat",k.max = 10,verbose = F) #Sale 2 para jerarquico. Nos vamos a quedar con 3
+```
+
+Nos quedamos con la estrategia de aglomeración jerarquica, bajo el algoritmo AGNES, que es el que ha demostrado mejor desempeño en el agrupamiento de casos.
+
+```{r include=FALSE}
+#Hacemos los clusters:
+res.pam = pam(g.dist,3,cluster.only = F)
+res.agnes = hcut(g.dist, k = 3,hc_func='agnes',hc_method = "ward.D")
+res.diana = hcut(g.dist, k = 3,hc_func='diana')
+```
+
+```{r include=FALSE}
+#Evaluación gráfica
+fviz_silhouette(res.pam) #PAM
+```
+
+```{r echo=FALSE,message=FALSE,warning=FALSE,eval=TRUE,fig.show='hold',fig.width=7,fig.height=5, fig.align="center"}
+fviz_silhouette(res.agnes) #AGNES
+```
+
+```{r include=FALSE}
+fviz_silhouette(res.diana) #Diana
+```
+
+```{r include=FALSE}
+#Agregamos conglomerados:
+inputData$clust = factor(res.agnes$cluster)
+```
+
+```{r include=FALSE}
+#Lo pasamos a la data original:
+inputData$DISTRITO = row.names(inputData)
+row.names(inputData) = NULL
+inputData = inputData[,c(7,8)]
+```
+
+```{r include=FALSE}
+data = merge(data, inputData, by = "DISTRITO")
+```
+
+```{r include=FALSE}
+data$clust = factor(data$clust, levels = c(1:3), labels = c("Vulnerabilidad alta","Vulnerabilidad baja","Vulnerabilidad media"))
+```
+
+Características de cada conglomerado:
+
+```{r include=FALSE}
+summ_clust = data %>% 
+  group_by(clust) %>%
+  summarise(IDH = mean(IDH_2019, na.rm=T),
+            IVA = mean(IVA, na.rm = T),
+            POBREZA = mean(POBREZA_2019, na.rm = T),
+            EXT_POBREZA = mean(EXT_POBREZA_2019, na.rm =T),
+            DISCAPACIDAD = mean(tDISC, na.rm = T),
+            MAS80 = mean(tMAS80, na.rm = T))
+```
+
+```{r echo=FALSE}
+summ_clust%>%
+  kbl() %>%
+  kable_minimal()
+```
+
+Número de distritos por cada conglomerado:
+
+```{r include=FALSE}
+bar1 = data %>%
+  group_by(clust) %>%
+  summarise(Cluster = n())
+```
+
+```{r echo=FALSE,message=FALSE,warning=FALSE,eval=TRUE,fig.show='hold',fig.width=7,fig.height=5, fig.align="center"}
+ggplot(bar1, aes(x=clust, y=Cluster)) + 
+  geom_bar(stat = "identity") +
+  
+  labs(title = " ",
+       x = " ",
+       y = " ") +
+
+    geom_text(aes(label=Cluster), size=4, vjust=1.5, hjust = 0.5, color="white") + 
+  
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank())
+```
+
+Análisis geoespacial de clusters:
+
+```{r include=FALSE}
+#Juntamos información con el shape:
+mapDIS3=merge(mapDIS,data,by.x='IDDIST',by.y='UBIGEO', all.x = T) #siempre primero el shape
+```
+
+```{r echo=FALSE,message=FALSE,warning=FALSE,eval=TRUE,fig.show='hold',fig.width=9.5,fig.height=5.55, fig.align="center"}
+mapaleyendaL= ggplot(mapDIS3)+ geom_sf() + theme_light()
+
+mapaleyL= mapaleyendaL + geom_sf(data=mapDIS3,
+              aes(fill=clust),color = "gray")
+      
+mapa1= mapaleyL +
+coord_sf() + 
+scale_fill_manual(values=c("tomato","turquoise","lightgoldenrod1")) + theme_void() +
+  
+  
+theme(axis.title = element_blank(), axis.text = element_blank(), legend.position = "right") + labs(fill=" ") + theme(legend.text = element_text(size = 8)) +
+  
+labs(title = "Distritos según conglomerado de vulnerabilidad") +
+  
+theme(
+plot.title = element_text(color="black", size=11, face="bold"))
+
+mapa1
+```
+
+
+### 3. Modelando el voto
+
+```{r include=FALSE}
+colnames(data)[15] = "AP"
+```
+
+```{r include=FALSE}
+modelo = lm(AP ~ IDH_2019 + tDISC + tMAS80 + IVA + POBREZA_2019, data = data)
+```
+
+```{r echo=FALSE}
+equatiomatic::extract_eq(modelo, use_coefs = TRUE)
+```
+
+```{r echo=FALSE}
+model=list('AP'=data)
+modelsummary(modelo, title = "OLS",
+             stars = TRUE,
+             output = "kableExtra")
+```
+

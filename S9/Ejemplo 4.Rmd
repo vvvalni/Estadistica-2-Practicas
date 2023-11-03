@@ -10,27 +10,25 @@ output:
 library(flexdashboard)
 ```
 
-Visualizaciones {data-icon="fa-signal"}
-===================================== 
-    
+# Visualizaciones {data-icon="fa-signal"}
+
 ### Gráfico 1
-    
+
 ```{r}
 ```
-    
+
 ### Gráfico 2
 
 ```{r}
 ```
-   
-Tablas {data-icon="fa-table"}
-=====================================     
+
+# Tablas {data-icon="fa-table"}
 
 ### Tablas 1
-    
+
 ```{r}
 ```
-    
+
 ### Tablas 2
 
 ```{r}

@@ -1,0 +1,150 @@
+---
+title: "Elecciones Regionales y Municipales (ERM) 2018"
+author: 'Alexander Benites'
+date: "Octubre 2022"
+subtitle: 'Limpieza de datos'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+#Librerías:
+library(dplyr)
+library(rio)
+library(reshape2)
+```
+
+### 1. Variables independientes:
+
+Las variables independientes del trabajo provienen de la base de datos de CEPLAN a nivel distrital y son las siguientes:
+
++ Población estimada al año 2020
++ Población con edad mayor a 80 años
++ Población con alguna discapacidad en el distrito
++ Índice de vulnerabilidad alimentaria
++ IDH 2019
++ % de pobreza al año 2019
++ % de pobreza extrema al año 2019
+
+```{r}
+#Bases de datos:
+data = import("ceplan.xlsx")
+```
+
+Limpiando base de CEPLAN:
+
+```{r}
+sub_data = data %>%
+  select(c(1,2,3,6,8,9,29,39,40,42)) 
+
+colnames(sub_data) = c("CAT","UBIGEO","DISTRITO","POB_2020","MAS80_2020","DISC_2020","IVA","IDH_2019","POBREZA_2019","EXT_POBREZA_2019")
+
+sub_data = sub_data %>%
+  filter(CAT == "Distrito")
+```
+
+```{r}
+#Solo Lima:
+sub_data$UBIGEO_PROV = substr(sub_data$UBIGEO,1,4)
+sub_data$UBIGEO_REG = substr(sub_data$UBIGEO,1,2)
+
+#Añadimos cero:
+
+sub_data$UBIGEO_REG = stringr::str_pad(sub_data$UBIGEO_REG, 6, side = "right", pad = 0)
+sub_data$UBIGEO_PROV = stringr::str_pad(sub_data$UBIGEO_PROV, 6, side = "right", pad = 0)
+
+lima = sub_data %>%
+  filter(UBIGEO_PROV == 150100)
+```
+
+```{r}
+#Eliminando tildes:
+
+lima[1,3] = "ANCON"
+lima[12,3] = "JESUS MARIA"
+lima[19,3] = "LURIN"
+lima[23,3] = "PACHACAMAC"
+lima[28,3] = "RIMAC"
+lima[35,3] = "SAN MARTIN DE PORRES"
+lima[38,3] = "SANTA MARIA DEL MAR"
+lima[43,3] = "VILLA MARIA DEL TRIUNFO"
+```
+
+
+
+### 2. Variable dependiente:
+
+Esta base de datos tiene los resultados electorales para la provincia de Lima en las ERM 2018. De aquí se extraerán las siguientes variables:
+
++ Ausentismo del distrito
++ Voto inválido
++ Votos válidos por organización política
+
+```{r}
+erm = import("erm2018.xlsx")
+```
+
+```{r}
+#Nos quedamos con el ausentismo distrital:
+
+ausen_erm = erm %>%
+  group_by(DISTRITO) %>%
+  summarise(PAR = max(PAR, na.rm = T))
+
+ausen_erm$AUSEN = 100 - ausen_erm$PAR
+ausen_erm = ausen_erm %>% select("DISTRITO","AUSEN")
+```
+
+```{r}
+#Sacamos el porcentaje de votos inválidos por distrito:
+
+ausen_inval = erm %>% 
+  select("DISTRITO","ORG","EMITIDOS") %>%
+  filter(ORG == "VOTOS EN BLANCO" | 
+           ORG == "VOTOS NULOS")
+
+ausen_inval=dcast(ausen_inval, DISTRITO~ORG, fill=0)
+
+ausen_inval$INVAL = ausen_inval$`VOTOS EN BLANCO` + ausen_inval$`VOTOS NULOS`
+
+ausen_inval = ausen_inval %>% select("DISTRITO","INVAL")
+```
+
+```{r}
+# Ahora vamos con el % de votos por organización política:
+
+sub_erm = erm[complete.cases(erm$VALIDOS),]
+sub_erm = sub_erm %>% select("DISTRITO","ORG","VALIDOS")
+sub_erm = dcast(sub_erm, DISTRITO~ORG, fill=0)
+```
+
+```{r}
+#Ahora con quien gana con distrito:
+
+winner_erm = erm[complete.cases(erm$VALIDOS),]
+winner_erm = winner_erm[!winner_erm$ORG == "TOTAL DE VOTOS VALIDOS",]
+
+winner_erm=winner_erm %>% 
+  select(DISTRITO, ORG, VALIDOS) %>%
+  group_by(DISTRITO) %>%
+     slice(which.max(VALIDOS))
+
+colnames(winner_erm)[2] = "GANADOR"
+colnames(winner_erm)[3] = "WIN_VAL"
+```
+
+```{r}
+erm_final = merge(ausen_erm, ausen_inval, by ="DISTRITO")
+erm_final = merge(erm_final, sub_erm, by ="DISTRITO")
+erm_final = merge(erm_final, winner_erm, by ="DISTRITO")
+```
+
+
+### 3. Data final
+
+```{r}
+finalData = merge(lima, erm_final, by = "DISTRITO")
+head(finalData)
+```
+
