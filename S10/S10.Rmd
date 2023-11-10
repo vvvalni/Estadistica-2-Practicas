@@ -14,7 +14,6 @@ knitr::include_graphics("logoPUCP.png")
 
 Hasta el momento, hemos visto cómo traer data desde repositorios virtuales, desde portales web (con técnicas de scrapping) y diferentes funciones para limpiar inconsistencias en nuestras bases de datos. Continuando con todo lo anterior, en esta sesión repasaremos las diferentes estructuras de datos en R, enfocándonos en el formateo de fechas, horas y operaciones con ese tipo de datos.
 
-
 ## 1. Trabajando con fechas
 
 Veamos cómo especificar la conversión en el formato según la manera en la cual ha sido sistematizada nuestra data:
@@ -45,15 +44,15 @@ Veamos cómo se encuentran las celdas donde está la información de las fechas 
 data[1,8]
 ```
 
-
 Esta es la manera de adecuar el formato de fechas con lenguaje base de R. Utilizamos la función *as.Date* y especificamos el vector y el formato en el cuál se sistematizó la información. Siempre realizamos una verificación antes de guardar la información:
 
 Ojo:
 
 A veces cuando apliquemos as.Date, podemos obtener NA en vez de lo que buscamos, debido a la configuración de la fecha. En ese caso, dependiendo si trabajamos con fechas locales (en español) o en inglés, apliquemos los siguientes códigos:
 
-Sys.setlocale("LC_TIME") # para fechas en español
-Sys.setlocale("LC_TIME", "English") # para retornar a fechas en inglés
+Sys.setlocale("LC_TIME") \# para fechas en español
+
+Sys.setlocale("LC_TIME", "English") \# para retornar a fechas en inglés
 
 ```{r}
 as.Date(data$Date, format = "%d %B %Y")
@@ -89,7 +88,7 @@ data$ind_days=interval(data$fechas,data$act_date) %/% days(1)
 head(data[8:14])
 ```
 
-¿Qué país tiene menos tiempo como República independiente y qué país tiene más tiempo siendo independiente? Al tener un formato adecuado, podemos extraer esa información. 
+¿Qué país tiene menos tiempo como República independiente y qué país tiene más tiempo siendo independiente? Al tener un formato adecuado, podemos extraer esa información.
 
 ```{r}
 data[which.min(data$ind_years),]
@@ -118,8 +117,8 @@ head(dat1)
 Primero, construyamos un vector con toda la información que necesitamos. Para eso podemos utilizar la función *paste* que ya conocemos. En este caso demás, vamos a utilizar el argumento separados, para diferenciar año, mes y día con un "-":
 
 ```{r}
-#paste(dat1$Year,dat1$Month, sep="-")
-#paste(dat1$Year, dat1$Month, "15", sep="-")
+paste(dat1$Year,dat1$Month, sep="-")
+paste(dat1$Year, dat1$Month, "15", sep="-")
 ```
 
 Elaborado el vector, podemos darle formato. El paquete *lubridate*, adicionalmente, contiene funciones para detectar rápidamente cuando tenemos un vector que contiene años, meses y días. Esto lo hacemos con la función *ymd* si es que el orden de la información es año - mes - día. El orden de las letras cambiará según se presente el orden de las fechas.
@@ -134,7 +133,6 @@ Asignemos el día 15 como una fecha arbitraria para otorgar el formato con la fu
 dat1$nd = ymd(paste(dat1$Year, dat1$Month, "15", sep = "-"))
 str(dat1$nd)
 ```
-
 
 ## 2. Trabajando con horas, minutos y segundos:
 
@@ -159,7 +157,6 @@ ventanillas = ventanillas[,c(1,3,6:9)]
 str(ventanillas)
 ```
 
-
 Cambiemos algunos nombres de las columnas para trabajar con mayor facilidad:
 
 ```{r}
@@ -170,7 +167,7 @@ colnames(ventanillas) = c("VENTANILLA","TICKET","GENERACION","LLAMADA","ATENCION
 Otorguemos formato a uno de los vectores:
 
 ```{r}
-#as.POSIXct(ventanillas$GENERACION, format = "%H:%M:%S") #Pone la fecha de hoy por defecto
+as.POSIXct(ventanillas$GENERACION, format = "%H:%M:%S") #Pone la fecha de hoy por defecto
 ventanillas$GENER_TEST = as.POSIXct(ventanillas$GENERACION, format = "%H:%M:%S")
 str(ventanillas$GENER_TEST)
 ```
@@ -340,10 +337,9 @@ ggplot(tiempos_Fecha, aes(x = hour, y = day, fill = ATENCIONES)) +
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-
 # 3. Agrupación y construcción de intervalos:
 
-Agrupar datos y construir intervalos desde los datos son dos conceptos que se encuntran relacionados. En lo que respecta al primero, lo que hacemos es transformar una variable numérica en una categórica, asignando cortes a los datos. Es un intercambio, en el sentido que perdemos precisión y ganamos "claridad" al momento de presentar la información. 
+Agrupar datos y construir intervalos desde los datos son dos conceptos que se encuntran relacionados. En lo que respecta al primero, lo que hacemos es transformar una variable numérica en una categórica, asignando cortes a los datos. Es un intercambio, en el sentido que perdemos precisión y ganamos "claridad" al momento de presentar la información.
 
 A lo largo del curso ya hemos visto formas de agrupar nuestros datos, principalmente utilizando la función *ifelse*. Utilicemos la base de datos del artículo "Pavimentando con Votos" para ejemplificar diferentes formas de agrupar nuestros datos:
 
@@ -351,7 +347,7 @@ A lo largo del curso ya hemos visto formas de agrupar nuestros datos, principalm
 data = import("https://github.com/PoliticayGobiernoPUCP/estadistica_anapol2/blob/master/DATA/pavimentando%20con%20votos.sav?raw=true")
 ```
 
-Hagamos algunos cortes a la variable con el porcentaje de votos de la oposición (pctopo) de la base de datos: 
+Hagamos algunos cortes a la variable con el porcentaje de votos de la oposición (pctopo) de la base de datos:
 
 ```{r}
 #Veamos cómo está formateada:
@@ -386,8 +382,7 @@ table(data$cortes_pctopo_2)
 
 Ahora, al agrupar nuestra data, podemos crear diferentes condicionales para realizar el agrupamiento. Por ejemplo, qué sucede si queremos crear grupos para dividir la data entre los Municipios tomando en cuenta el % de votos de la oposición y si es que había o no prioridad técnica (priorizado):
 
-0 --> Municipio no priorizado
-1 --> Municipio priorizado
+0 --\> Municipio no priorizado 1 --\> Municipio priorizado
 
 ```{r}
 data$cat_dob = ifelse(data$pctopo > 50 & data$priorizado == 1, 1, #Ojo que son dos condiciones, por eso el &
@@ -577,17 +572,14 @@ dis_reg
 sum(dis_reg$count) #verificamos
 ```
 
+------------------------------------------------------------------------
 
----
+Exporte la data de este link: <https://github.com/appliedepi/epirhandbook/blob/master/inst/extdata/linelist_cleaned.xlsx>
 
-Exporte la data de este link: https://github.com/appliedepi/epirhandbook/blob/master/inst/extdata/linelist_cleaned.xlsx
+1.  Otorgue un formato adecuado para las variables que tienen fechas. Encuentre la diferencia en días entre la fecha de infección del paciente (date_infection) y la fecha de hospitalización (date_hospitalisation). Describa cuáles fueron los síntomas del paciente o pacientes con menor y mayor diferencia de tiempo entre ambas fechas.
 
-1. Otorgue un formato adecuado para las variables que tienen fechas. Encuentre la diferencia en días entre la fecha de infección del paciente (date_infection) y la fecha de hospitalización (date_hospitalisation). Describa cuáles fueron los síntomas del paciente o pacientes con menor y mayor diferencia de tiempo entre ambas fechas.
-
-2. Cree un vector que marque las 18:00 y encuentre la diferencia en minutos y segundos con respecto a la variable *time_admission*.
+2.  Cree un vector que marque las 18:00 y encuentre la diferencia en minutos y segundos con respecto a la variable *time_admission*.
 
 ```{r}
 data=import("https://github.com/appliedepi/epirhandbook/blob/master/inst/extdata/linelist_cleaned.xlsx?raw=true")
 ```
-
-

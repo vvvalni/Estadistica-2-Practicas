@@ -8,3 +8,70 @@ output:
         - { icon: "fa-twitter", href: "https://twitter.com/asbenitesa", align: right}
         - { icon: "fa-linkedin", href: "https://www.linkedin.com/in/airam-bello-lopez-895a34220/", align: right}
 ---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+```
+
+```{r include=FALSE}
+library(rio)
+library(ggplot2)
+library(DT)
+library(kableExtra)
+library(modelsummary)
+library(Rmisc)
+library(forcats)
+```
+
+```{r}
+link = "https://github.com/vvvalni/Proyecto-EAP-2/raw/main/Bases%20de%20Datos/data_final.xlsx"
+PBIgen = import(link)
+
+link2 = "https://github.com/vvvalni/Proyecto-EAP-2/raw/main/Shapes/World_Countries_Generalized.shp"
+mapMUN=sf::read_sf("link2") #shapefile
+```
+
+```{r}
+#Juntamos información con el shape:
+mapMUN2=merge(mapMUN,PBIgen,by = "ISO", all.x = T) 
+```
+
+
+# Violencia de Género
+
+### Mapa del grado de violencia por país
+
+```{r}
+mapaleyendaL= ggplot(mapMUN2)+ geom_sf() + theme_light()
+
+mapaleyL= mapaleyendaL + geom_sf(data=mapMUN2,
+              aes(fill=`violencia`),color = "white")
+      
+mapa1= mapaleyL +
+coord_sf() + 
+scale_fill_gradient(low = "#F3E5F5",  high = "#4A148C", breaks=seq(from=0, to=100, by=10)) + theme_void() + 
+  
+theme(axis.title = element_blank(), axis.text = element_blank(), legend.position = "right") + labs(fill=" ") + theme(legend.text = element_text(size = 8)) +
+  
+labs(title = "Índice de violencia de género por país") +
+  
+theme(
+plot.title = element_text(color="black", size=10, face="bold"))
+
+mapa1
+```
+
+## Column {data-width=400} {.tabset}
+
+### Ranking de violencia por País
+
+```{r}
+
+```
+
+### Histograma
+
+```{r}
+
+```
+
